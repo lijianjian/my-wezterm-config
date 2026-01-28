@@ -197,26 +197,26 @@ local keys = {
    { key = 'PageDown', mods = 'NONE',    action = act.ScrollByPage(0.75) },
 
    -- key-tables --
-   -- resizes fonts
-   {
-      key = 'f',
-      mods = 'LEADER',
-      action = act.ActivateKeyTable({
-         name = 'resize_font',
-         one_shot = false,
-         timeout_milliseconds = 1000,
-      }),
-   },
-   -- resize panes
-   {
-      key = 'p',
-      mods = 'LEADER',
-      action = act.ActivateKeyTable({
-         name = 'resize_pane',
-         one_shot = false,
-         timeout_milliseconds = 1000,
-      }),
-   },
+    -- resizes fonts
+    {
+       key = 'f',
+       mods = 'LEADER',
+       action = act.ActivateKeyTable({
+          name = 'resize_font',
+          one_shot = false,
+          timeout_milliseconds = 3000,  -- 3秒，给新手更多反应时间
+       }),
+    },
+    -- resize panes
+    {
+       key = 'p',
+       mods = 'LEADER',
+       action = act.ActivateKeyTable({
+          name = 'resize_pane',
+          one_shot = false,
+          timeout_milliseconds = 3000,  -- 3秒，给新手更多反应时间
+       }),
+    },
 }
 
 -- stylua: ignore
