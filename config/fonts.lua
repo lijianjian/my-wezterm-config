@@ -2,8 +2,9 @@ local wezterm = require('wezterm')
 local platform = require('utils.platform')
 
 -- local font_family = 'Maple Mono NF'
-local font_family = 'JetBrainsMono Nerd Font'
+-- local font_family = 'JetBrainsMono Nerd Font'
 -- local font_family = 'CartographCF Nerd Font'
+local font_family = 'Consolas'  -- Windows 内置字体
 
 local font_size = platform.is_mac and 12 or 9.75
 

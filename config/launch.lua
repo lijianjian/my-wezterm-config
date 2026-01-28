@@ -6,7 +6,7 @@ local options = {
 }
 
 if platform.is_win then
-   options.default_prog = { 'pwsh', '-NoLogo' }
+   options.default_prog = { 'powershell' }
    options.launch_menu = {
       { label = 'PowerShell Core', args = { 'pwsh', '-NoLogo' } },
       { label = 'PowerShell Desktop', args = { 'powershell' } },
@@ -15,7 +15,7 @@ if platform.is_win then
       { label = 'Msys2', args = { 'ucrt64.cmd' } },
       {
          label = 'Git Bash',
-         args = { 'C:\\Users\\kevin\\scoop\\apps\\git\\current\\bin\\bash.exe' },
+         args = { 'C:\\Program Files\\Git\\bin\\bash.exe' },
       },
    }
 elseif platform.is_mac then
