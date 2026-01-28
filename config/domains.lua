@@ -48,7 +48,7 @@ local function parse_ssh_config()
                     remote_address = current_hostname or current_host,
                     username = current_user or 'root',
                     multiplexing = 'None',
-                    assume_shell = 'Bash',
+                    assume_shell = 'Unknown',
                  })
               end
              current_host = host
@@ -77,7 +77,7 @@ local function parse_ssh_config()
            remote_address = current_hostname or current_host,
            username = current_user or 'root',
            multiplexing = 'None',
-           assume_shell = 'Bash',
+           assume_shell = 'Unknown',
         })
      end
    
