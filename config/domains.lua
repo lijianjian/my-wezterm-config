@@ -1,4 +1,17 @@
 local platform = require('utils.platform')
+local wezterm = require('wezterm')
+
+-- 获取当前系统用户名
+local function get_current_user()
+   if platform.is_win then
+      return os.getenv('USERNAME') or 'user'
+   else
+      return os.getenv('USER') or os.getenv('LOGNAME') or 'user'
+   end
+end
+
+local current_user = get_current_user()
+local home_dir = wezterm.home_dir
 
 local options = {
    -- ref: https://wezfurlong.org/wezterm/config/lua/SshDomain.html
@@ -26,15 +39,15 @@ if platform.is_win then
       {
          name = 'wsl:ubuntu-fish',
          distribution = 'Ubuntu',
-         username = 'kevin',
-         default_cwd = '/home/kevin',
+         username = current_user,
+         default_cwd = '/home/' .. current_user,
          default_prog = { 'fish', '-l' },
       },
       {
          name = 'wsl:ubuntu-bash',
          distribution = 'Ubuntu',
-         username = 'kevin',
-         default_cwd = '/home/kevin',
+         username = current_user,
+         default_cwd = '/home/' .. current_user,
          default_prog = { 'bash', '-l' },
       },
    }
