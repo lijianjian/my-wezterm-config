@@ -8,6 +8,9 @@ return {
 
    scrollback_lines = 20000,
 
+   -- suppress warnings about missing glyphs for control characters (e.g., \u{15} for Ctrl+U)
+   warn_about_missing_glyphs = false,
+
    hyperlink_rules = {
       -- Matches: a URL in parens: (URL)
       {
