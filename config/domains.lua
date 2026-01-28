@@ -42,17 +42,15 @@ local function parse_ssh_config()
           local host = line:match('^Host%s+(.+)$')
           if host then
              -- 保存前一个主机的配置
-             if current_host then
-                table.insert(ssh_domains, {
-                   name = 'ssh:' .. current_host,
-                   remote_address = current_hostname or current_host,
-                   username = current_user or 'root',
-                   multiplexing = 'None',
-                   assume_shell = 'Posix',
-                   -- 使用 bash 作为远程 shell，避免 fish 初始化脚本问题
-                   remote_wsl_distribution = nil,
-                })
-             end
+              if current_host then
+                 table.insert(ssh_domains, {
+                    name = 'ssh:' .. current_host,
+                    remote_address = current_hostname or current_host,
+                    username = current_user or 'root',
+                    multiplexing = 'None',
+                    assume_shell = 'Bash',
+                 })
+              end
              current_host = host
              current_hostname = nil
              current_user = nil
@@ -72,18 +70,16 @@ local function parse_ssh_config()
        end
     end
     
-    -- 保存最后一个主机的配置
-    if current_host then
-       table.insert(ssh_domains, {
-          name = 'ssh:' .. current_host,
-          remote_address = current_hostname or current_host,
-          username = current_user or 'root',
-          multiplexing = 'None',
-          assume_shell = 'Posix',
-          -- 使用 bash 作为远程 shell，避免 fish 初始化脚本问题
-          remote_wsl_distribution = nil,
-       })
-    end
+     -- 保存最后一个主机的配置
+     if current_host then
+        table.insert(ssh_domains, {
+           name = 'ssh:' .. current_host,
+           remote_address = current_hostname or current_host,
+           username = current_user or 'root',
+           multiplexing = 'None',
+           assume_shell = 'Bash',
+        })
+     end
    
    file:close()
    wezterm.log_info('Loaded ' .. #ssh_domains .. ' SSH domains')
