@@ -175,7 +175,10 @@ function M.pick()
             choices = choices,
             fuzzy = true,
             fuzzy_description = 'Open project [' .. domain .. ']: ',
-            action = wezterm.action_callback(function(win, p, id, label)
+            -- 注意：内层回调统一使用按键时刻捕获的真实 pane（外层 pane），
+            -- 而不是回调参数里的 pane——后者可能是选择器的 TermWiz overlay pane，
+            -- 对其执行 spawn/split 会破坏 mux attach（wezterm connect）窗口的连接
+            action = wezterm.action_callback(function(win, _p, id, label)
                if not id then
                   return
                end
@@ -185,14 +188,14 @@ function M.pick()
                      choices = open_actions,
                      alphabet = '1234567890a',
                      description = label .. ' — 按数字选择打开方式，Esc 取消',
-                     action = wezterm.action_callback(function(w, pn, action_id)
+                     action = wezterm.action_callback(function(w, _pn, action_id)
                         if not action_id then
                            return
                         end
-                        open_project(w, pn, domain, host, id, label, action_id)
+                        open_project(w, pane, domain, host, id, label, action_id)
                      end),
                   }),
-                  p
+                  pane
                )
             end),
          }),
