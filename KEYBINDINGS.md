@@ -72,6 +72,33 @@ cat ~/.config/wezterm/KEYBINDINGS.md
 - **使用场景**：诊断问题、查看性能指标、调试配置
 - **包含信息**：GPU 渲染情况、帧率、内存使用等
 
+#### `Alt+O` - 项目选择器（两步交互）
+- **第一步**：模糊搜索项目目录，来源：`~/workspace/agents/*`、`~/workspace/my-tools/*`、`~/IdeaProjects/*`（排除 `*.worktrees`）、`~/vcProjects/*`，以及直接条目 `~/workspace/vp-note`、`~/workspace/vp-platform-analytics`
+- **第二步**：按数字选择打开方式（Esc 取消）：
+  - `1`-`3` **Tab**：shell（临时）/ claude 新会话 / claude --resume
+  - `4`-`6` **Pane→ 右分屏**：shell / claude 新会话 / claude --resume
+  - `7`-`9` **Pane↓ 下分屏**：shell / claude 新会话 / claude --resume
+  - `0`、`a` **Workspace**：shell / claude --resume（继续项目）
+- **说明**：`--resume` 弹出该目录的历史会话列表挑选恢复，无历史则自动新建；Workspace 类似 tmux session，配合 `F5` 切换，同名已存在时直接切换
+- **claude 退出行为**：退出后留在项目目录的交互 fish 里，标签页不关闭
+- **workspace 语义**：同名工作区已存在时直接切换，不会重复创建/启动
+- **远程支持**：当前 pane 在 `ssh:xxx` domain 时，自动通过 `ssh xxx find` 扫描远端目录，并在同一 ssh domain 中打开、启动远端的 claude（要求本机对该主机免密登录）
+- **维护**：新增项目目录自动出现；在 `utils/project-picker.lua` 中配置——扫描根目录 `project_roots`、单目录直接条目 `direct_projects`、排除规则 `exclude_patterns`（均相对 `$HOME`），打开动作在 `open_actions` 中增减
+
+#### `Alt+S` - 保存工作区状态（resurrect 插件）
+- **作用**：立即把当前工作区的 tab/pane 布局和各 pane 的 cwd 存盘
+- **自动保存**：插件默认每 5 分钟自动保存一次，切走焦点（alt-tab 离开 wezterm）时也会立即保存，此键用于手动兜底
+- **存储位置**：Linux 为 `~/.local/share/wezterm/resurrect/`
+
+#### `Alt+R` - 恢复已保存的状态（resurrect 插件）
+- **作用**：模糊搜索已保存的 workspace/window/tab 状态并恢复（布局、目录、屏幕文本）
+- **使用场景**：wezterm 重启后找回之前的工作区
+- **注意**：恢复的是布局和目录，pane 里是新 shell，运行中的进程不会复活；workspace 恢复会新开 GUI 窗口，不影响当前窗口
+- **启动恢复**：gui-startup 时自动恢复上次保存的工作区，无需手动按键
+
+#### `Alt+Ctrl+R` - 删除已保存的状态（resurrect 插件）
+- **作用**：模糊搜索并删除不再需要的状态存档
+
 ---
 
 ### ✏️ 文本操作 - 复制/粘贴/搜索

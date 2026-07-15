@@ -49,6 +49,7 @@ local GLYPH_LINUX = nf.cod_terminal_linux --[[  ]]
 local GLYPH_DEBUG = nf.fa_bug --[[  ]]
 -- local GLYPH_SEARCH = nf.fa_search --[[  ]]
 local GLYPH_SEARCH = '🔭'
+local GLYPH_CLAUDE = '✳️' -- Claude 品牌星标（emoji 呈现，视觉更大）
 
 local GLYPH_UNSEEN_NUMBERED_BOX = {
    [1] = nf.md_numeric_1_box_multiple, --[[ 󰼏 ]]
@@ -94,8 +95,8 @@ local RENDER_VARIANTS = {
 ---@type table<string, Cells.SegmentColors>
 -- stylua: ignore
 local colors = {
-   text_default          = { bg = '#45475A', fg = '#1C1B19' },
-   text_hover            = { bg = '#5D87A3', fg = '#1C1B19' },
+   text_default          = { bg = '#45475A', fg = '#CDD6F4' },
+   text_hover            = { bg = '#5D87A3', fg = '#EFF1F5' },
    text_active           = { bg = '#74c7ec', fg = '#11111B' },
 
    unseen_output_default = { bg = '#45475A', fg = '#FFA066' },
@@ -112,6 +113,21 @@ local colors = {
 -- Helper functions
 -- ================
 
+---按 UTF-8 字符边界截断到不超过 max_bytes 字节（避免把多字节字符切成非法序列）
+---@param s string
+---@param max_bytes number
+local function utf8_truncate(s, max_bytes)
+   local i = max_bytes
+   while i > 0 do
+      local b = s:byte(i + 1)
+      if not b or b < 0x80 or b >= 0xC0 then
+         break
+      end
+      i = i - 1
+   end
+   return s:sub(1, i)
+end
+
 ---@param proc string
 local function clean_process_name(proc)
    local a = string.gsub(proc, '(.*[/\\])(.*)', '%2')
@@ -125,7 +141,16 @@ end
 local function create_title(process_name, base_title, max_width, inset)
    local title
 
-   if process_name:len() > 0 then
+   -- Claude Code 会话：标题由 Claude 经 OSC 写入——运行中开头是盲文 spinner 帧
+   -- （U+2800 区块，字节 E2 A0-A3 xx，自带动画），空闲时是 ✳ + 会话摘要；
+   -- 本地前台进程即 claude 时也识别（远程 pane 拿不到进程名，靠标题标记兜底）
+   if base_title:match('^\226[\160-\163]') then
+      title = base_title -- 保留 spinner 字符，1 秒一帧自然转动
+      inset = inset - 2
+   elseif base_title:match('✳') or process_name:match('^claude') then
+      title = GLYPH_CLAUDE .. ' ' .. base_title:gsub('✳', ''):gsub('^%s+', '')
+      inset = inset - 4 -- emoji 图标 6 字节仅占 2 列，修正字节计数偏差
+   elseif process_name:len() > 0 then
       title = process_name .. ' ~ ' .. base_title
    else
       title = base_title
@@ -141,12 +166,11 @@ local function create_title(process_name, base_title, max_width, inset)
       inset = inset - 2
    end
 
-   if title:len() > max_width - inset then
-      local diff = title:len() - max_width + inset
-      title = title:sub(1, title:len() - diff)
+   local budget = max_width - inset
+   if title:len() > budget then
+      title = utf8_truncate(title, budget)
    else
-      local padding = max_width - title:len() - inset
-      title = title .. string.rep(' ', padding)
+      title = title .. string.rep(' ', budget - title:len())
    end
 
    return title
@@ -210,6 +234,7 @@ function Tab:set_info(event_opts, tab, max_width)
    local process_name = clean_process_name(tab.active_pane.foreground_process_name)
 
    self.is_wsl = process_name:match('^wsl') ~= nil
+   self.is_claude_running = tab.active_pane.title:match('^\226[\160-\163]') ~= nil
    self.is_admin = (
       tab.active_pane.title:match('^Administrator: ') or tab.active_pane.title:match('(Admin)')
    ) ~= nil
@@ -276,14 +301,26 @@ function Tab:update_cells(event_opts, is_active, hover)
       )
    end
 
+   local text_colors = colors['text_' .. tab_state]
+   local unseen_colors = colors['unseen_output_' .. tab_state]
+   local scircle_colors = colors['scircle_' .. tab_state]
+
+   -- claude 运行中：整个 tab 底色换亮橙，深色字保证可读，一眼识别
+   if self.is_claude_running then
+      local bg = '#FAB387'
+      text_colors = { bg = bg, fg = '#11111B' }
+      unseen_colors = { bg = bg, fg = '#11111B' }
+      scircle_colors = { bg = 'rgba(0, 0, 0, 0.4)', fg = bg }
+   end
+
    self.cells
-      :update_segment_colors('scircle_left', colors['scircle_' .. tab_state])
-      :update_segment_colors('admin', colors['text_' .. tab_state])
-      :update_segment_colors('wsl', colors['text_' .. tab_state])
-      :update_segment_colors('title', colors['text_' .. tab_state])
-      :update_segment_colors('unseen_output', colors['unseen_output_' .. tab_state])
-      :update_segment_colors('padding', colors['text_' .. tab_state])
-      :update_segment_colors('scircle_right', colors['scircle_' .. tab_state])
+      :update_segment_colors('scircle_left', scircle_colors)
+      :update_segment_colors('admin', text_colors)
+      :update_segment_colors('wsl', text_colors)
+      :update_segment_colors('title', text_colors)
+      :update_segment_colors('unseen_output', unseen_colors)
+      :update_segment_colors('padding', text_colors)
+      :update_segment_colors('scircle_right', scircle_colors)
 end
 
 ---@return FormatItem[] (ref: https://wezfurlong.org/wezterm/config/lua/wezterm/format.html)

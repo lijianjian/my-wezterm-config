@@ -1,6 +1,8 @@
 local wezterm = require('wezterm')
 local platform = require('utils.platform')
 local backdrops = require('utils.backdrops')
+local project_picker = require('utils.project-picker')
+local resurrect = require('utils.resurrect').plugin
 local act = wezterm.action
 
 local mod = {}
@@ -26,6 +28,23 @@ local keys = {
       action = act.ShowLauncherArgs({ flags = 'FUZZY|WORKSPACES' }),
    },
    { key = 'F11', mods = 'NONE',    action = act.ToggleFullScreen },
+
+   -- project picker: 两步交互——先模糊选项目，再选打开方式（tab/workspace × shell/claude）--
+   { key = 'o',   mods = mod.SUPER,     action = project_picker.pick() },
+
+   -- session persistence (resurrect): 手动保存 / 模糊恢复 / 删除存档 --
+   { key = 's',   mods = mod.SUPER,     action = resurrect.workspace_state.save_workspace_action() },
+   {
+      key = 'r',
+      mods = mod.SUPER,
+      action = resurrect.fuzzy_loader.restore_action({
+         relative = true,
+         restore_text = true,
+         on_pane_restore = resurrect.pane_tree.default_on_pane_restore,
+      }),
+   },
+   { key = 'r',   mods = mod.SUPER_REV, action = resurrect.fuzzy_loader.delete_action() },
+
    { key = 'F12', mods = 'NONE',    action = act.ShowDebugOverlay },
    { key = 'f',   mods = mod.SUPER, action = act.Search({ CaseInSensitiveString = '' }) },
    {
