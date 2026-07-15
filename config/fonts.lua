@@ -6,29 +6,30 @@ local function get_font_config()
    if platform.is_win then
       -- Windows: 使用内置字体
       return {
-         font = wezterm.font_with_fallback {
+         font = wezterm.font_with_fallback({
             'Consolas',
             'Courier New',
-         },
+         }),
          font_size = 9.75,
       }
    elseif platform.is_linux then
-      -- Linux: 优先使用 JetBrains Mono，fallback 到系统字体
+      -- Linux: 优先使用 JetBrainsMono Nerd Font（含 LazyVim 图标），fallback 到系统字体
       return {
-         font = wezterm.font_with_fallback {
+         font = wezterm.font_with_fallback({
+            'JetBrainsMono Nerd Font',
             'JetBrains Mono',
             'DejaVu Sans Mono',
             'Monospace',
-         },
+         }),
          font_size = 10,
       }
    elseif platform.is_mac then
       -- macOS: 优先使用 JetBrains Mono
       return {
-         font = wezterm.font_with_fallback {
+         font = wezterm.font_with_fallback({
             'JetBrains Mono',
             'Monaco',
-         },
+         }),
          font_size = 12,
       }
    end
