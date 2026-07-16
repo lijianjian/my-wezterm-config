@@ -20,6 +20,4 @@ local options = Config:init()
    :append(require('config.general'))
    :append(require('config.launch')).options
 
-require('utils.resurrect').apply_to_config(options)
-
 return options

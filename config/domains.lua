@@ -15,8 +15,11 @@ local function get_ssh_config_path()
 end
 
 -- 使用 WezTerm multiplexing 的主机列表（需要远端也运行 wezterm）
+-- 'optiplex' = 常驻会话宿主机 shalii-OptiPlex-7090 (10.14.0.131)，
+-- 其他客户端机器需在各自 ~/.ssh/config 中添加同名 Host 才能生效
 local wezterm_mux_hosts = {
    ['localhost-self'] = true,
+   ['optiplex'] = true,
 }
 
 -- 解析 SSH 配置文件
@@ -142,9 +145,10 @@ if platform.is_linux then
    options.unix_domains = {
       {
          name = 'unix',
-         socket_path = '/run/user/' .. uid .. '/wezterm',
+         socket_path = '/run/user/' .. uid .. '/wezterm/sock',
       },
    }
+   options.default_domain = 'unix'
 end
 
 -- macOS 特定配置
