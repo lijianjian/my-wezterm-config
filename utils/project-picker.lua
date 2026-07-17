@@ -1,5 +1,6 @@
 local wezterm = require('wezterm')
 local act = wezterm.action
+local mux = wezterm.mux
 
 local M = {}
 
@@ -114,10 +115,28 @@ local launch_cmds = {
    ['claude-resume'] = 'claude --resume || claude',
 }
 
--- assume_shell = 'Unknown' 时 wezterm 无法为 ssh domain 设置 cwd，用显式命令进入目录
+-- mux 域(multiplexing = 'WezTerm')：Windows 客户端发出的带 args 的 spawn 会连同
+-- Windows 格式的环境变量表一起打包进 CommandBuilder，Unix 端 mux server 无法
+-- 反序列化并强制断开整个连接(wezterm/wezterm#5474)；这类域只能传 cwd 起默认
+-- shell，启动命令改由 send_text 注入（见 build_spawn / open_project）
+local function is_mux_domain(domain)
+   for _, d in ipairs(require('config.domains').ssh_domains) do
+      if d.name == domain then
+         return d.multiplexing == 'WezTerm'
+      end
+   end
+   return false
+end
+
+-- assume_shell = 'Unknown' 时 wezterm 无法为 ssh domain 设置 cwd，用显式命令进入目录；
+-- mux 域 assume_shell = 'Posix'，cwd 可直接生效
+-- 返回值：spawn 表，以及需要在新 pane 里 send_text 注入的启动命令（可为 nil）
 local function build_spawn(domain, host, dir, launch)
    local cmd = launch_cmds[launch]
    if host then
+      if is_mux_domain(domain) then
+         return { domain = { DomainName = domain }, cwd = dir }, cmd
+      end
       local shell = cmd and ("exec fish -l -C '" .. cmd .. "'") or 'exec "$SHELL" -l'
       return {
          domain = { DomainName = domain },
@@ -129,6 +148,15 @@ local function build_spawn(domain, host, dir, launch)
       spawn.args = { 'fish', '-l', '-C', cmd }
    end
    return spawn
+end
+
+local function workspace_exists(name)
+   for _, n in ipairs(mux.get_workspace_names()) do
+      if n == name then
+         return true
+      end
+   end
+   return false
 end
 
 -- 第二步动作菜单：id 格式为 open_mode 或 open_mode+launch，按数字直选
@@ -148,16 +176,40 @@ local open_actions = {
 
 local function open_project(win, p, domain, host, dir, label, action_id)
    local open_mode, launch = action_id:match('^([^+]+)%+?(.*)$')
-   local spawn = build_spawn(domain, host, dir, launch ~= '' and launch or nil)
+   local spawn, send_cmd = build_spawn(domain, host, dir, launch ~= '' and launch or nil)
+   local new_pane
    if open_mode == 'workspace' then
       local ws_name = host and (host .. '/' .. label) or label
-      win:perform_action(act.SwitchToWorkspace({ name = ws_name, spawn = spawn }), p)
+      if send_cmd and not workspace_exists(ws_name) then
+         -- SwitchToWorkspace 的 spawn 带 args 同样会触发 #5474，改用 mux API 建窗后注入
+         local _, pane_ = mux.spawn_window({ workspace = ws_name, domain = spawn.domain, cwd = spawn.cwd })
+         new_pane = pane_
+         win:perform_action(act.SwitchToWorkspace({ name = ws_name }), p)
+      else
+         win:perform_action(act.SwitchToWorkspace({ name = ws_name, spawn = spawn }), p)
+      end
    elseif open_mode == 'pane-right' then
-      win:perform_action(act.SplitHorizontal(spawn), p)
+      if send_cmd then
+         new_pane = p:split({ direction = 'Right', domain = spawn.domain, cwd = spawn.cwd })
+      else
+         win:perform_action(act.SplitHorizontal(spawn), p)
+      end
    elseif open_mode == 'pane-down' then
-      win:perform_action(act.SplitVertical(spawn), p)
+      if send_cmd then
+         new_pane = p:split({ direction = 'Bottom', domain = spawn.domain, cwd = spawn.cwd })
+      else
+         win:perform_action(act.SplitVertical(spawn), p)
+      end
    else
-      win:perform_action(act.SpawnCommandInNewTab(spawn), p)
+      if send_cmd then
+         local _, pane_ = win:mux_window():spawn_tab(spawn)
+         new_pane = pane_
+      else
+         win:perform_action(act.SpawnCommandInNewTab(spawn), p)
+      end
+   end
+   if new_pane and send_cmd then
+      new_pane:send_text(send_cmd .. '\n')
    end
 end
 
