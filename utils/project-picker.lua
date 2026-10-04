@@ -15,7 +15,6 @@ local project_roots = {
 -- 直接作为候选的单个项目目录（相对 $HOME），不扫其子目录
 local direct_projects = {
    'workspace/vp-note',
-   'workspace/vp-platform-analytics',
 }
 
 -- 候选排除规则（Lua pattern，对本地/远程结果统一生效）

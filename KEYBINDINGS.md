@@ -73,7 +73,7 @@ cat ~/.config/wezterm/KEYBINDINGS.md
 - **包含信息**：GPU 渲染情况、帧率、内存使用等
 
 #### `Alt+O` - 项目选择器（两步交互）
-- **第一步**：模糊搜索项目目录，来源：`~/workspace/agents/*`、`~/workspace/my-tools/*`、`~/IdeaProjects/*`（排除 `*.worktrees`）、`~/vcProjects/*`，以及直接条目 `~/workspace/vp-note`、`~/workspace/vp-platform-analytics`
+- **第一步**：模糊搜索项目目录，来源：`~/workspace/agents/*`、`~/workspace/my-tools/*`、`~/IdeaProjects/*`（排除 `*.worktrees`）、`~/vcProjects/*`，以及直接条目 `~/workspace/vp-note`
 - **第二步**：按数字选择打开方式（Esc 取消）：
   - `1`-`3` **Tab**：shell（临时）/ claude 新会话 / claude --resume
   - `4`-`6` **Pane→ 右分屏**：shell / claude 新会话 / claude --resume
